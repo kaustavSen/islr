@@ -1,0 +1,241 @@
+---
+title: "Chapter 2 - Exercises"
+description: |
+  My attempt of the exericse questions from Chapter 2: Statistical Learning
+author:
+  - name: Kaustav Sen 
+date: "`r Sys.Date()`"
+output: 
+  distill::distill_article:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Conceptual
+
+## Question 7
+
+Creating a function to calculate the "Euclidean distance" between two points.
+
+```{r}
+distance_euclidean <- function(x1, x2) {
+  # assume that both x1 and x2 are vectors of the same length
+  square_diff <- (x1 - x2) ^ 2
+  sqrt(sum(square_diff))
+}
+```
+
+Storing the data provided in the question as a `data.frame`
+
+```{r}
+data <- data.frame(x1 = c(0, 2, 0, 0, -1, 1),
+                   x2 = c(3, 0, 1, 1, 0, 1),
+                   x3 = c(0, 0, 3, 2, 1, 1),
+                   y = c("Red", "Red", "Red", "Green", "Green", "Red"))
+data
+```
+
+(a) Computing the Euclidean distance from the test point
+
+```{r}
+test_point <- c(0, 0, 0)
+distances <- apply(data[, -4], 1, function(x) distance_euclidean(test_point, x))
+
+distances
+```
+
+(b) When `K=1` the closest observation is observation 5. Thus, the prediction will be **Green**.
+
+(c) When `K=3` the three closest observations will be 2, 5 and 6. Since, 2 and 6 are "Red", the prediction will be **Red**.
+
+(d) If the Bayes decision boundary is highly non-linear, then we will expect the *best* value of K to be large. This is because we will need the model to be more flexible in order to capture the non-linear trend. This is only possible when K is high.
+
+# Applied
+
+## Question 8
+
+(a) Loading in the `college.csv` data set and storing it in a variable called `college`.
+
+```{r}
+college <- read.csv("https://www.statlearning.com/s/College.csv")
+
+head(college)
+```
+
+(b) Setting the row-names for the college data set and also using the `fix()` function
+
+```{r}
+rownames(college) <- college[,1]
+# fix(college)
+```
+
+Eliminating the first column from the data.
+
+```{r}
+college <- college[, -1]
+head(college)
+```
+
+(c) (i) Using the `summary()` function in order to get a numerical summary of the variables in the data.
+
+```{r}
+summary(college)
+```
+
+(ii) Using the `pairs()` function to plot a scatter plot for the first 10 columns in the data.
+
+The first column is non-numeric, so ignored it from the subset.
+
+```{r fig.width=8, fig.asp=1}
+college_cols_10 <- college[, 2:10]
+
+pairs(college_cols_10)
+```
+
+(iii) Creating a box-plot 
+
+```{r fig.width=6, fig.asp=0.8}
+plot(as.factor(college$Private), college$Outstate, 
+     xlab = "Is Private?", 
+     main = "How do Out-of-state tuition vary \nbetween Private and non-Private colleges?")
+```
+
+(iv) Creating a new qualitative variable, `Elite`
+
+```{r}
+Elite <- rep("No", nrow(college))
+Elite[college$Top10perc > 50] <- "Yes"
+Elite <- as.factor(Elite)
+college <- data.frame(college, Elite)
+```
+
+```{r}
+summary(college$Elite)
+```
+
+```{r fig.width=6, fig.asp=0.8}
+plot(college$Elite, college$Outstate,
+     xlab = "Is Elite?",
+     ylab = "Out-of-state tuition",
+     main = "Do Elite colleges charge more?")
+```
+
+(v) Creating some histograms
+
+```{r fig.width=8, fig.asp=1}
+par(mfrow = c(2, 2))
+hist(college$Personal, breaks = 30, xlab = "Personal Spending", main = "")
+hist(college$PhD, breaks = 30, xlab = "Percent of facultly with Ph.D.'s", main = "")
+hist(college$S.F.Ratio, breaks = 30, xlab = "Student/faculty ratio", main = "")
+hist(college$Grad.Rate, breaks = 30, xlab = "Graduation Rate", main = "")
+```
+
+(vi) Some further explorations of the data set...
+
+```{r fig.width=6, fig.height=6}
+# Using a scatter-plot to see if more expensive schools have a lower acceptance rate
+acceptance_rate <- college$Accept / college$Apps
+tuition_fees <- college$Outstate
+par(mfrow = c(1,1))
+plot(acceptance_rate, tuition_fees, main = "Do expensive schools have lower acceptance rates?")
+```
+
+```{r fig.width=6, fig.height=6}
+plot(college$Grad.Rate, college$Expend, log = "y",
+     xlab = "Graduation Rate", ylab = "Instructional Expenditure per student",
+     main = "Does higher spending per student lead to higher\ngraduation rate?")
+```
+
+## Question 9
+
+Reading in the `Auto` data and removing the `NA` values.
+
+```{r}
+Auto <- read.table("https://www.statlearning.com/s/Auto.data", 
+                   header = TRUE, na.strings = "?")
+Auto <- na.omit(Auto)
+```
+
+(a) Taking a look at the structure of the data set
+
+```{r}
+str(Auto)
+```
+
+The variables `name`, `cylinders` and `origin` are qualitative. Rest all of the other variables are quantitative in nature.
+
+(b) Calculating the range of each quantitative variable.
+
+```{r}
+# Store the quantitative and qualitative variable names separately
+qual_cols <- c("origin", "name", "cylinders")
+quant_cols <- setdiff(names(Auto), qual_cols)
+
+sapply(Auto[, quant_cols], range)
+```
+
+(c) Calculating the mean and standard deviation of each quantitative variable.
+
+```{r}
+output_summary_stats <- function(x) {
+  list(mean = mean(x), standard_deviation = sd(x))
+}
+```
+
+```{r}
+sapply(Auto[, quant_cols], output_summary_stats)
+```
+
+(d) Sub-setting the data and then re-calculate the summary statistics.
+
+```{r}
+Auto_subset <- Auto[-c(10:85), quant_cols]
+sapply(Auto_subset[, quant_cols], output_summary_stats)
+```
+
+(e) Exploring predictors using scatter-plots
+
+```{r include=FALSE}
+theme_custom <- function(base_family, base_size = 11) {
+ theme_bw(base_family = base_family, base_size = base_size) %+replace%
+  theme(
+    legend.position = "top",
+    panel.grid.minor = element_blank()
+  ) 
+}
+```
+
+```{r}
+library(ggplot2)
+
+plot_scatter_mpg <- function(var) {
+ ggplot(Auto) +
+  geom_point(aes({{ var }}, mpg, color = as.factor(cylinders)), 
+             size = 2, alpha = 0.7) +
+  guides(color = guide_legend("Number of cylinders", "top", title.hjust = 0.5)) +
+  theme_custom(base_family = "Inter") 
+}
+```
+
+```{r fig.width=10, fig.asp=0.8}
+library(patchwork)
+
+plot_scatter_mpg(displacement) + 
+  plot_scatter_mpg(horsepower) + 
+  plot_scatter_mpg(weight) +
+  plot_scatter_mpg(acceleration) +
+  plot_layout(ncol = 2, guides = "collect") &
+  theme(legend.position = "top")
+```
+
+(f) There seems to be a negative correlation between `mpg` and the following variables:
+
+- `displacment`
+- `horsepower` and
+- `weight`
+
+Plus, the number of cylinders also affects `mpg`. Further, there exists a slight positive correlation between `mpg` and `acceleration`. So, these varaibles can be used as a starting point for the modelling process.
