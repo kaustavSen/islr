@@ -200,7 +200,7 @@ sapply(Auto_subset[, quant_cols], output_summary_stats)
 (e) Exploring predictors using scatter-plots
 
 ```{r include=FALSE}
-theme_custom <- function(base_family, base_size = 11) {
+theme_custom <- function(base_family = "Inter", base_size = 11) {
  theme_bw(base_family = base_family, base_size = base_size) %+replace%
   theme(
     legend.position = "top",
@@ -238,4 +238,118 @@ plot_scatter_mpg(displacement) +
 - `horsepower` and
 - `weight`
 
-Plus, the number of cylinders also affects `mpg`. Further, there exists a slight positive correlation between `mpg` and `acceleration`. So, these varaibles can be used as a starting point for the modelling process.
+Plus, the number of cylinders also affects `mpg`. Further, there exists a slight positive correlation between `mpg` and `acceleration`. So, these variables can be used as a starting point for the modeling process.
+
+## Question 10
+
+(a) Reading in the `Boston` data set
+
+```{r}
+library(ISLR2)
+
+head(Boston)
+```
+
+```{r}
+nrow(Boston) # number of rows in the data set
+ncol(Boston) # number of columns in the data set
+```
+
+Each row represents a house in the suburb in Boston. The columns represent in the features of each house.
+
+(b) Pairwise scatter plots
+
+```{r fig.width=12, fig.asp=1}
+pairs(Boston, family = "Inter", cex.axis = 1.2, cex.labels = 1.5)
+```
+
+There is some relationship between `medv` and `lstat`, `rm`.
+
+(c) Based on the below scatter plots, we do see a relationship between `crim` and 
+
+```{r fig.width=8, fig.asp=0.8}
+ggplot(Boston) +
+  geom_point(aes(dis, crim), shape = 21, stroke = 2, 
+             size = 5, fill = "black", color = "white", alpha = 0.7) +
+  scale_x_log10("Distance to employment centers", breaks = 10^seq(0, 1, 0.25),
+                labels = scales::number_format(accuracy = 0.1)) +
+  scale_y_log10("Per capita crime rate", 
+                labels = scales::number_format(accuracy = 0.1)) +
+  labs(
+    title = "As distance to employment centers increases the per capita\ncrime rate also decreases"
+  ) +
+  theme_custom(base_size = 14)
+```
+
+```{r fig.width=8, fig.asp=0.8}
+ggplot(Boston) +
+  geom_point(aes(age, crim), shape = 21, stroke = 2, 
+             size = 5, fill = "black", color = "white", alpha = 0.7) +
+  scale_x_continuous("Proportion of houses built prior to 1940",
+                labels = scales::number_format(accuracy = 0.1)) +
+  scale_y_log10("Per capita crime rate", 
+                labels = scales::number_format(accuracy = 0.1)) +
+  labs(
+    title = "Crime rate seems to be slightly higher in older localities"
+  ) +
+  theme_custom(base_size = 14)
+```
+
+(d) Exploring tracts with high crime rates.
+
+```{r fig.width=8, fig.asp=0.6}
+Boston$tax_bracket <- cut(Boston$tax, breaks = c(0, 500, 1000), labels = c("Low", "High"))
+
+table(Boston$tax_bracket)
+
+ggplot(Boston, aes(tax_bracket, crim)) +
+  geom_boxplot(outlier.size = 0, outlier.stroke = 0) +
+  geom_jitter(width = 0.2, height = 0, size = 4, alpha = 0.5) +
+  labs(
+    title = "Crime rate is higher in high property tax rate regions",
+    x = "Property tax rate",
+    y = "Per capita crime rate"
+  ) +
+  theme_custom(base_size = 14)
+```
+
+```{r fig.width=8, fig.asp=0.6}
+ggplot(Boston, aes(as.factor(rad), crim)) +
+  geom_boxplot() +
+  labs(
+    title = "Regions with poor access to radial highways have relatively higher\ncrime rate",
+    x = "Index of accessibility to radial highways",
+    y = "Per capita crime rate"
+  ) +
+  theme_custom(base_size = 14)
+```
+
+```{r fig.width=8, fig.asp=0.6}
+Boston$ptratio_cut <- cut(Boston$ptratio, breaks = c(0, 15, 20, Inf),
+                          labels = c("Less than 15", "Between 15 to 20", "More than 20"))
+
+ggplot(Boston, aes(ptratio_cut, crim)) +
+  geom_boxplot() +
+  labs(
+    title = "Regions with higher student-teacher ratio have higher crime rates",
+    x = "Number of students per teacher",
+    y = "Per capita crime rate"
+  ) +
+  theme_custom(base_size = 14)
+```
+
+(e) There are `35` census tracts which bound to the Charles river.
+
+```{r}
+table(Boston$chas)
+```
+
+(f) The median pupil-teacher ratio is `19.05`.
+
+```{r}
+median(Boston$ptratio)
+```
+
+(g) TBC
+
+(h) TBC
